@@ -1,0 +1,15 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="MCS100_CPU_CODESYS.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="comPort" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ipAddr" Type="System.String" Scope="User">
+      <Value Profile="(Default)">192.168.1.50</Value>
+    </Setting>
+    <Setting Name="port" Type="System.UInt16" Scope="User">
+      <Value Profile="(Default)">502</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
