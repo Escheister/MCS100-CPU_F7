@@ -241,6 +241,35 @@ namespace MCS100_CPU_CODESYS
             await Task.Delay(50);
             return reply.Item2;
         }
+        private void DataToGrid(byte[] cmdIn, int column)
+        {
+            BeginInvoke((MethodInvoker)(() =>
+            {
+                for (int i = 3, j = 0; i < cmdIn.Length - 2; j++)
+                {
+                    RegistersGrid[column, j].Value = cmdIn[i] << 8 | cmdIn[i+1];
+                    i += 2;
+                }
+                DateFromGrid.Text =
+                $"{RegistersGrid[column, 0].Value}/{RegistersGrid[column, 1].Value}/{RegistersGrid[column, 2].Value}";
+                TimeFromGrid.Text =
+                $"{RegistersGrid[column, 3].Value}:{RegistersGrid[column, 4].Value}:{RegistersGrid[column, 5].Value}";
+            }));
+        }
+        async private Task CellSetRegisterValue(object sender, DataGridViewCellEventArgs e)
+        {
+            Enum.TryParse(RegistersGrid[(int)CEnum.field, e.RowIndex].Value.ToString(), out REnum register);
+            if (RegistersGrid[(int)CEnum.ReadWriteAO, e.RowIndex].Value is null) return;
+            await semaphoreSlim.WaitAsync();
+            try
+            {
+                if (UInt16.TryParse(RegistersGrid[(int)CEnum.ReadWriteAO, e.RowIndex].Value.ToString(), out ushort value)
+                    && await WriteRegister(register, value) == Reply.Ok) return;
+                throw new Exception();
+            }
+            catch { ToInfoStatus("Error transcieve"); RegistersGrid[(int)CEnum.ReadWriteAO, e.RowIndex].Value = ""; }
+            finally { semaphoreSlim.Release(); }
+        }
         async private Task StartReading()
         {
             bool firstRead = true;
@@ -273,36 +302,6 @@ namespace MCS100_CPU_CODESYS
             }
             while (autoRButton.Checked);
             AfterStartReading(autoRButton.Checked);
-        }
-
-        async private Task CellSetRegisterValue(object sender, DataGridViewCellEventArgs e)
-        {
-            Enum.TryParse(RegistersGrid[(int)CEnum.field, e.RowIndex].Value.ToString(), out REnum register);
-            if (RegistersGrid[(int)CEnum.ReadWriteAO, e.RowIndex].Value is null) return;
-            await semaphoreSlim.WaitAsync();
-            try
-            {
-                if (UInt16.TryParse(RegistersGrid[(int)CEnum.ReadWriteAO, e.RowIndex].Value.ToString(), out ushort value)
-                    && await WriteRegister(register, value) == Reply.Ok) return;
-                throw new Exception();
-            }
-            catch { ToInfoStatus("Error transcieve"); RegistersGrid[(int)CEnum.ReadWriteAO, e.RowIndex].Value = ""; }
-            finally { semaphoreSlim.Release(); }
-        }
-        private void DataToGrid(byte[] cmdIn, int column)
-        {
-            BeginInvoke((MethodInvoker)(() =>
-            {
-                for (int i = 3, j = 0; i < cmdIn.Length - 2; j++)
-                {
-                    RegistersGrid[column, j].Value = cmdIn[i] << 8 | cmdIn[i+1];
-                    i += 2;
-                }
-                DateFromGrid.Text =
-                $"{RegistersGrid[column, 0].Value}/{RegistersGrid[column, 1].Value}/{RegistersGrid[column, 2].Value}";
-                TimeFromGrid.Text =
-                $"{RegistersGrid[column, 3].Value}:{RegistersGrid[column, 4].Value}:{RegistersGrid[column, 5].Value}";
-            }));
         }
         async private Task SetRealTimeClick()
         {
