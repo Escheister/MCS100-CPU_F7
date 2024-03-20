@@ -267,6 +267,12 @@ namespace MCS100_CPU_CODESYS
             await Task.Run(() => StartReadingAsync());
             AfterStartReading(autoRButton.Checked);
         }
+        private void GetSocketException(string message)
+            => Invoke((MethodInvoker)(() => {
+            manualRButton.Checked = Enabled;
+            ConnectClick(null, null);
+            MessageBox.Show(message);
+        }));
         async private Task CellSetRegisterValue(object sender, DataGridViewCellEventArgs e)
         {
             Enum.TryParse(RegistersGrid[(int)CEnum.field, e.RowIndex].Value.ToString(), out REnum register);
@@ -278,14 +284,7 @@ namespace MCS100_CPU_CODESYS
                     && await WriteRegister(register, value) == Reply.Ok) return;
                 throw new Exception();
             }
-            catch (SocketException ex)
-            {
-                Invoke((MethodInvoker)(() => {
-                    manualRButton.Checked = Enabled;
-                    ConnectClick(null, null);
-                    MessageBox.Show(ex.Message);
-                }));
-            }
+            catch (SocketException ex) { GetSocketException(ex.Message); }
             catch { ToInfoStatus("Error transcieve"); RegistersGrid[(int)CEnum.ReadWriteAO, e.RowIndex].Value = ""; }
             finally { semaphoreSlim.Release(); }
         }
@@ -312,14 +311,7 @@ namespace MCS100_CPU_CODESYS
                     ToInfoStatus(reply.Item2.ToString());
                     if (reply != null && reply.Item2 == Reply.Ok) DataToGrid(reply.Item1, (int)CEnum.ReadAI);
                 }
-                catch (SocketException ex)
-                {
-                    Invoke((MethodInvoker)(() => {
-                        manualRButton.Checked = Enabled;
-                        ConnectClick(null, null);
-                        MessageBox.Show(ex.Message);
-                    }));
-                }
+                catch (SocketException ex) { GetSocketException(ex.Message); break; }
                 catch (Exception ex) { MessageBox.Show(ex.ToString()); }
                 finally
                 {
@@ -347,13 +339,7 @@ namespace MCS100_CPU_CODESYS
                 await MWriteRegisters(REnum.Year, new ushort[7]);
                 await MWriteRegisters(REnum.Year, timeArray);
             }
-            catch (SocketException ex) { 
-                Invoke((MethodInvoker)(() => { 
-                    manualRButton.Checked = Enabled; 
-                    ConnectClick(null, null); 
-                    MessageBox.Show(ex.Message); 
-                })); 
-            }
+            catch (SocketException ex) { GetSocketException(ex.Message); }
             catch { ToInfoStatus("Error transcieve"); }
             finally { semaphoreSlim.Release(); }
         }
