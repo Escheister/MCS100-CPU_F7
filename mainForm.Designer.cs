@@ -30,9 +30,9 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(mainForm));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.toolStripSerial = new System.Windows.Forms.ToolStrip();
             this.ClearConfig = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
@@ -80,16 +80,16 @@
             this.ID = new System.Windows.Forms.NumericUpDown();
             this.SyncTime = new System.Windows.Forms.Button();
             this.RegistersGrid = new System.Windows.Forms.DataGridView();
-            this.EnabledColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.FieldsColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.LoadFieldColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.UploadFieldColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.DateFromGrid = new System.Windows.Forms.Label();
             this.TimeFromGrid = new System.Windows.Forms.Label();
             this.SettingsPanel = new System.Windows.Forms.Panel();
             this.autoRButton = new System.Windows.Forms.RadioButton();
             this.manualReadButton = new System.Windows.Forms.Button();
             this.manualRButton = new System.Windows.Forms.RadioButton();
+            this.EnabledColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.FieldsColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.LoadFieldColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.UploadFieldColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.toolStripSerial.SuspendLayout();
             this.SerUdpPages.SuspendLayout();
             this.RtuPage.SuspendLayout();
@@ -565,28 +565,28 @@
             this.RegistersGrid.BackgroundColor = System.Drawing.Color.White;
             this.RegistersGrid.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.RegistersGrid.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle4.BackColor = System.Drawing.Color.White;
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.RegistersGrid.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle1.BackColor = System.Drawing.Color.White;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.RegistersGrid.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.RegistersGrid.ColumnHeadersHeight = 16;
             this.RegistersGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.EnabledColumn,
             this.FieldsColumn,
             this.LoadFieldColumn,
             this.UploadFieldColumn});
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.RegistersGrid.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.RegistersGrid.DefaultCellStyle = dataGridViewCellStyle2;
             this.RegistersGrid.Enabled = false;
             this.RegistersGrid.EnableHeadersVisualStyles = false;
             this.RegistersGrid.GridColor = System.Drawing.Color.Gray;
@@ -595,63 +595,20 @@
             this.RegistersGrid.MultiSelect = false;
             this.RegistersGrid.Name = "RegistersGrid";
             this.RegistersGrid.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle6.BackColor = System.Drawing.Color.White;
-            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.RegistersGrid.RowHeadersDefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle3.BackColor = System.Drawing.Color.White;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.RegistersGrid.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.RegistersGrid.RowHeadersVisible = false;
             this.RegistersGrid.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToDisplayedHeaders;
             this.RegistersGrid.RowTemplate.Height = 19;
             this.RegistersGrid.Size = new System.Drawing.Size(162, 149);
             this.RegistersGrid.TabIndex = 26;
             this.RegistersGrid.TabStop = false;
-            // 
-            // EnabledColumn
-            // 
-            this.EnabledColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
-            this.EnabledColumn.FillWeight = 20F;
-            this.EnabledColumn.Frozen = true;
-            this.EnabledColumn.HeaderText = "#";
-            this.EnabledColumn.MinimumWidth = 20;
-            this.EnabledColumn.Name = "EnabledColumn";
-            this.EnabledColumn.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.EnabledColumn.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.EnabledColumn.Width = 20;
-            // 
-            // FieldsColumn
-            // 
-            this.FieldsColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
-            this.FieldsColumn.Frozen = true;
-            this.FieldsColumn.HeaderText = "Field";
-            this.FieldsColumn.MaxInputLength = 16;
-            this.FieldsColumn.Name = "FieldsColumn";
-            this.FieldsColumn.ReadOnly = true;
-            this.FieldsColumn.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.FieldsColumn.Width = 34;
-            // 
-            // LoadFieldColumn
-            // 
-            this.LoadFieldColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
-            this.LoadFieldColumn.Frozen = true;
-            this.LoadFieldColumn.HeaderText = "Read";
-            this.LoadFieldColumn.MaxInputLength = 16;
-            this.LoadFieldColumn.Name = "LoadFieldColumn";
-            this.LoadFieldColumn.ReadOnly = true;
-            this.LoadFieldColumn.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.LoadFieldColumn.Width = 38;
-            // 
-            // UploadFieldColumn
-            // 
-            this.UploadFieldColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
-            this.UploadFieldColumn.HeaderText = "Write";
-            this.UploadFieldColumn.MaxInputLength = 16;
-            this.UploadFieldColumn.Name = "UploadFieldColumn";
-            this.UploadFieldColumn.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.UploadFieldColumn.Width = 37;
             // 
             // DateFromGrid
             // 
@@ -717,6 +674,50 @@
             this.manualRButton.TabStop = true;
             this.manualRButton.Text = "Manual";
             this.manualRButton.UseVisualStyleBackColor = true;
+            // 
+            // EnabledColumn
+            // 
+            this.EnabledColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
+            this.EnabledColumn.FillWeight = 20F;
+            this.EnabledColumn.Frozen = true;
+            this.EnabledColumn.HeaderText = "#";
+            this.EnabledColumn.MaxInputLength = 1;
+            this.EnabledColumn.MinimumWidth = 20;
+            this.EnabledColumn.Name = "EnabledColumn";
+            this.EnabledColumn.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.EnabledColumn.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.EnabledColumn.Width = 20;
+            // 
+            // FieldsColumn
+            // 
+            this.FieldsColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            this.FieldsColumn.Frozen = true;
+            this.FieldsColumn.HeaderText = "Field";
+            this.FieldsColumn.MaxInputLength = 16;
+            this.FieldsColumn.Name = "FieldsColumn";
+            this.FieldsColumn.ReadOnly = true;
+            this.FieldsColumn.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.FieldsColumn.Width = 34;
+            // 
+            // LoadFieldColumn
+            // 
+            this.LoadFieldColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            this.LoadFieldColumn.Frozen = true;
+            this.LoadFieldColumn.HeaderText = "Read";
+            this.LoadFieldColumn.MaxInputLength = 16;
+            this.LoadFieldColumn.Name = "LoadFieldColumn";
+            this.LoadFieldColumn.ReadOnly = true;
+            this.LoadFieldColumn.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.LoadFieldColumn.Width = 38;
+            // 
+            // UploadFieldColumn
+            // 
+            this.UploadFieldColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            this.UploadFieldColumn.HeaderText = "Write";
+            this.UploadFieldColumn.MaxInputLength = 16;
+            this.UploadFieldColumn.Name = "UploadFieldColumn";
+            this.UploadFieldColumn.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.UploadFieldColumn.Width = 37;
             // 
             // mainForm
             // 
@@ -812,14 +813,14 @@
         private System.Windows.Forms.ToolStripButton ClearConfig;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripButton GridClear;
-        private System.Windows.Forms.DataGridViewTextBoxColumn EnabledColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn FieldsColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn LoadFieldColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn UploadFieldColumn;
         private System.Windows.Forms.Panel SettingsPanel;
         private System.Windows.Forms.RadioButton autoRButton;
         private System.Windows.Forms.Button manualReadButton;
         private System.Windows.Forms.RadioButton manualRButton;
+        private System.Windows.Forms.DataGridViewTextBoxColumn EnabledColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn FieldsColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn LoadFieldColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn UploadFieldColumn;
     }
 }
 

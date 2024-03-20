@@ -9,6 +9,8 @@ using System;
 
 using MBus;
 using Microsoft.Win32;
+using System.Collections.Generic;
+using System.Drawing;
 
 namespace MCS100_CPU_CODESYS
 {
@@ -37,7 +39,8 @@ namespace MCS100_CPU_CODESYS
             foreach (ToolStripDropDownItem item in stopBits.DropDownItems) item.Click += StopBitsForSerial;
             OpenCom.Click += OpenComClick;
             Connect.Click += ConnectClick;
-            manualReadButton.Click += async (s, e) => await Task.Run(() => StartReading());
+
+            manualReadButton.Click += (s, e) => StartReading();
             RegistersGrid.CellEndEdit += async (s, e) => await Task.Run(() => CellSetRegisterValue(s, e));
             SyncTime.Click += async (s, e) => await Task.Run(() => SetRealTimeClick());
         }
@@ -138,16 +141,18 @@ namespace MCS100_CPU_CODESYS
             => mbRtu.BaudRate = Convert.ToInt32(BaudRate.SelectedItem);
         private void FillGrid()
         {
-            BeginInvoke((MethodInvoker)(() =>
+            RegistersGrid.Rows.Clear();
+            List<DataGridViewRow> rows = new List<DataGridViewRow>();
+            foreach (string enumName in Enum.GetNames(typeof(REnum)))
             {
-                RegistersGrid.Rows.Clear();
-                foreach (string enumName in Enum.GetNames(typeof(REnum))) {
-                    Enum.TryParse(enumName, out REnum index);
-                    RegistersGrid.Rows.Add((int)index, enumName);
-                }
-                DateFromGrid.Text = "";
-                TimeFromGrid.Text = "";
-            }));
+                Enum.TryParse(enumName, out REnum index);
+                rows.Add(new DataGridViewRow());
+                rows[rows.Count - 1].CreateCells(RegistersGrid, (int)index, enumName);
+                rows[rows.Count - 1].Height = 17;
+            }
+            RegistersGrid.Rows.AddRange(rows.ToArray());
+            DateFromGrid.Text = "";
+            TimeFromGrid.Text = "";
         }
         private void GridClearClick() => FillGrid();
         private void AfterComEvent(bool sw)
@@ -256,6 +261,12 @@ namespace MCS100_CPU_CODESYS
                 $"{RegistersGrid[column, 3].Value}:{RegistersGrid[column, 4].Value}:{RegistersGrid[column, 5].Value}";
             }));
         }
+        async private void StartReading()
+        {
+            AfterStartReading(autoRButton.Checked);
+            await Task.Run(() => StartReadingAsync());
+            AfterStartReading(autoRButton.Checked);
+        }
         async private Task CellSetRegisterValue(object sender, DataGridViewCellEventArgs e)
         {
             Enum.TryParse(RegistersGrid[(int)CEnum.field, e.RowIndex].Value.ToString(), out REnum register);
@@ -267,13 +278,20 @@ namespace MCS100_CPU_CODESYS
                     && await WriteRegister(register, value) == Reply.Ok) return;
                 throw new Exception();
             }
+            catch (SocketException ex)
+            {
+                Invoke((MethodInvoker)(() => {
+                    manualRButton.Checked = Enabled;
+                    ConnectClick(null, null);
+                    MessageBox.Show(ex.Message);
+                }));
+            }
             catch { ToInfoStatus("Error transcieve"); RegistersGrid[(int)CEnum.ReadWriteAO, e.RowIndex].Value = ""; }
             finally { semaphoreSlim.Release(); }
         }
-        async private Task StartReading()
+        async private Task StartReadingAsync()
         {
             bool firstRead = true;
-            AfterStartReading(autoRButton.Checked);
             do
             {
                 await semaphoreSlim.WaitAsync();
@@ -291,9 +309,18 @@ namespace MCS100_CPU_CODESYS
                     }
                     cmdOut = mbClass.FormatModBusCMD((byte)ID.Value, ReadMB.ReadAI, 0, 7);
                     reply = mbClass.Handler(cmdOut);
+                    ToInfoStatus(reply.Item2.ToString());
                     if (reply != null && reply.Item2 == Reply.Ok) DataToGrid(reply.Item1, (int)CEnum.ReadAI);
                 }
-                catch { ToInfoStatus("Error receive"); }
+                catch (SocketException ex)
+                {
+                    Invoke((MethodInvoker)(() => {
+                        manualRButton.Checked = Enabled;
+                        ConnectClick(null, null);
+                        MessageBox.Show(ex.Message);
+                    }));
+                }
+                catch (Exception ex) { MessageBox.Show(ex.ToString()); }
                 finally
                 {
                     await Task.Delay(manualRButton.Checked ? 50 : (int)timeoutMB.Value);
@@ -301,7 +328,6 @@ namespace MCS100_CPU_CODESYS
                 }
             }
             while (autoRButton.Checked);
-            AfterStartReading(autoRButton.Checked);
         }
         async private Task SetRealTimeClick()
         {
@@ -320,6 +346,13 @@ namespace MCS100_CPU_CODESYS
             {
                 await MWriteRegisters(REnum.Year, new ushort[7]);
                 await MWriteRegisters(REnum.Year, timeArray);
+            }
+            catch (SocketException ex) { 
+                Invoke((MethodInvoker)(() => { 
+                    manualRButton.Checked = Enabled; 
+                    ConnectClick(null, null); 
+                    MessageBox.Show(ex.Message); 
+                })); 
             }
             catch { ToInfoStatus("Error transcieve"); }
             finally { semaphoreSlim.Release(); }
