@@ -4,21 +4,14 @@ using System.IO.Ports;
 using System.Linq;
 using System;
 
+using ProtocolEnums;
+
 namespace MBus
 {
-    public enum ReadMB : byte { ReadDO = 0x01, ReadDI = 0x02, ReadAO = 0x03, ReadAI = 0x04,  }
-    public enum WriteMB : byte { WriteDO = 0x05, WriteAO = 0x06, }
-    public enum MultiWriteMB : byte { MWriteDO = 0x0f, MWriteAO = 0x10, }
-    public enum Reply
-    {
-        Ok = 0,
-        Null = 1,
-        WCrc = 2,
-        WSign = 3,
-        WCommand = 4,
-    }
     public class ModBusClass
     {
+        public delegate void GetReplyEvent(string msg);
+        public event GetReplyEvent ToReply;
         public delegate Tuple<byte[], Reply> HandlerDelegate(byte[] cmdOut);
         public ModBusClass(object dev) { GetTypeDevice(dev); }
         private Socket Sock;
@@ -74,6 +67,7 @@ namespace MBus
             Port.Write(cmdOut, 0, cmdOut.Length);
             byte[] cmdIn = ReceiveMbRtu(GetLength(cmdOut), 250);
             Reply reply = GetReply(cmdOut, cmdIn);
+            ToReply?.Invoke(reply.ToString());
             return Tuple.Create(cmdIn, reply);
         }
         private Tuple<byte[], Reply> WriteMbTcp(byte[] cmdOut)
@@ -81,38 +75,16 @@ namespace MBus
             Sock.Send(cmdOut);
             byte[] cmdIn = ReceiveMbTcp(GetLength(cmdOut), 250);
             Reply reply = GetReply(cmdOut, cmdIn);
+            ToReply?.Invoke(reply.ToString());
             return Tuple.Create(cmdIn, reply);
-        }
-        private IEnumerable<byte> ModRTU_CRC(byte[] buf, int len)
-        {
-            ushort crc = 0xFFFF;
-            for (int pos = 0; pos < len; pos++)
-            {
-                crc ^= buf[pos];
-                for (int i = 8; i != 0; i--)
-                {
-                    if ((crc & 0x0001) != 0)
-                    {
-                        crc >>= 1;
-                        crc ^= 0xA001;
-                    }
-                    else crc >>= 1;
-                }
-            }
-            return BitConverter.GetBytes(crc);
-        }
-        private bool CheckCRC(byte[] cmdIn)
-        {
-            byte[] crcIn = ModRTU_CRC(cmdIn, cmdIn.Length).ToArray();
-            return ((crcIn[0] << 8) | crcIn[1]) == 0;
         }
         private IEnumerable<byte> UShortToByteArray(ushort value) => BitConverter.GetBytes(value).Reverse();
         private Reply GetReply(byte[] cmdOut, byte[] cmdIn)
         {
             if (cmdIn == null) return Reply.Null;
-            if (!CheckCRC(cmdIn)) return Reply.WCrc;
+            if (!ModBusCrc.CrcCheck(cmdIn)) return Reply.WCrc;
             if (cmdIn[0] != cmdOut[0]) return Reply.WSign;
-            if (cmdIn[1] != cmdOut[1]) return Reply.WCommand;
+            if (cmdIn[1] != cmdOut[1]) return Reply.WCmd;
             return Reply.Ok;
         }
         public byte[] FormatModBusCMD(byte signature, ReadMB cmdMB, ushort startReg, ushort countReg)
@@ -120,7 +92,7 @@ namespace MBus
             List<byte> bytes = new List<byte>() { signature, (byte)cmdMB };
             bytes.AddRange(UShortToByteArray(startReg));
             bytes.AddRange(UShortToByteArray(countReg));
-            bytes.AddRange(ModRTU_CRC(bytes.ToArray(), bytes.Count));
+            bytes.AddRange(ModBusCrc.GetCrcBytes(bytes.ToArray()));
             return bytes.ToArray();
         }
         public byte[] FormatModBusCMD(byte signature, WriteMB cmdMB, ushort startReg, ushort countReg)
@@ -128,7 +100,7 @@ namespace MBus
             List<byte> bytes = new List<byte>() { signature, (byte)cmdMB };
             bytes.AddRange(UShortToByteArray(startReg));
             bytes.AddRange(UShortToByteArray(countReg));
-            bytes.AddRange(ModRTU_CRC(bytes.ToArray(), bytes.Count));
+            bytes.AddRange(ModBusCrc.GetCrcBytes(bytes.ToArray()));
             return bytes.ToArray();
         }
         public byte[] FormatMultiplyDO(byte signature, ushort startReg, ushort countReg, byte byteCount, byte[] valueDO)
@@ -138,7 +110,7 @@ namespace MBus
             bytes.AddRange(UShortToByteArray(countReg));
             bytes.Add(byteCount);
             bytes.AddRange(valueDO);
-            bytes.AddRange(ModRTU_CRC(bytes.ToArray(), bytes.Count));
+            bytes.AddRange(ModBusCrc.GetCrcBytes(bytes.ToArray()));
             return bytes.ToArray();
         }
         public byte[] FormatMultiplyAO(byte signature, ushort startReg, ushort countReg, ushort[] valuesAO)
@@ -148,7 +120,7 @@ namespace MBus
             bytes.AddRange(UShortToByteArray(countReg));
             bytes.Add((byte)(valuesAO.Length*2));
             foreach (ushort u in valuesAO) bytes.AddRange(UShortToByteArray(u));
-            bytes.AddRange(ModRTU_CRC(bytes.ToArray(), bytes.Count));
+            bytes.AddRange(ModBusCrc.GetCrcBytes(bytes.ToArray()));
             return bytes.ToArray();
         }
         private int GetLength(byte[] cmdOut)

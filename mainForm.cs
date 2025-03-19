@@ -1,4 +1,5 @@
 ﻿using MCS100_CPU_CODESYS.Properties;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Net.Sockets;
@@ -7,15 +8,15 @@ using System.Threading;
 using System.IO.Ports;
 using System;
 
+using StaticSettings;
+using ProtocolEnums;
 using MBus;
-using Microsoft.Win32;
-using System.Collections.Generic;
-using System.Drawing;
 
 namespace MCS100_CPU_CODESYS
 {
     public partial class mainForm : Form
     {
+
         private Socket mbTcp;
         public ModBusClass mbClass { get; set; } = null;
         SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
@@ -31,7 +32,7 @@ namespace MCS100_CPU_CODESYS
             Load += FormLoad;
             FormClosed += FormClose;
             GridClear.Click += (s, e) => GridClearClick();
-            comPort.SelectedIndexChanged += (s, e) => mbRtu.PortName = ((ComboBox)s).SelectedItem.ToString();
+            comPort.SelectedIndexChanged += (s, e) => mainPort.PortName = ((ComboBox)s).SelectedItem.ToString();
             BaudRate.SelectedIndexChanged += (s, e) => BaudRateSelectedIndexChanged();
             RefreshSerial.Click += (s, e) => AddPorts(comPort);
             foreach (ToolStripDropDownItem item in dataBits.DropDownItems) item.Click += DataBitsForSerial;
@@ -40,7 +41,7 @@ namespace MCS100_CPU_CODESYS
             OpenCom.Click += OpenComClick;
             Connect.Click += ConnectClick;
 
-            manualReadButton.Click += (s, e) => StartReading();
+            ReadButton.Click += (s, e) => StartReading();
             RegistersGrid.CellEndEdit += async (s, e) => await Task.Run(() => CellSetRegisterValue(s, e));
             SyncTime.Click += async (s, e) => await Task.Run(() => SetRealTimeClick());
         }
@@ -52,10 +53,12 @@ namespace MCS100_CPU_CODESYS
             FillGrid();
         }
         private void FormClose(object sender, EventArgs e) => SaveConfig();
+        private void ToMessageStatus(string msg) => BeginInvoke((MethodInvoker)(() => MessageStatus.Text = msg));
+        private void ToReplyStatus(string msg) => BeginInvoke((MethodInvoker)(() => ReplyStatus.Text = msg));
         private void ComDefault()
         {
-            mbRtu.WriteTimeout =
-            mbRtu.ReadTimeout = 500;
+            mainPort.WriteTimeout =
+            mainPort.ReadTimeout = 500;
             BaudRate.SelectedItem = "38400";
             DataBitsForSerial(dataBits8, null);
             ParityForSerial(ParityNone, null);
@@ -83,7 +86,6 @@ namespace MCS100_CPU_CODESYS
             LoadConfig();
             Settings.Default.Save();
         }
-        private void ToInfoStatus(string msg) => BeginInvoke((MethodInvoker)(() => InfoStatus.Text = msg));
         private void AddPorts(ComboBox box)
         {
             box.Items.Clear();
@@ -99,9 +101,9 @@ namespace MCS100_CPU_CODESYS
         {
             ToolStripMenuItem databits = (ToolStripMenuItem)sender;
             foreach (ToolStripMenuItem item in dataBits.DropDownItems) item.CheckState = CheckState.Unchecked;
-            mbRtu.DataBits = Convert.ToInt32(databits.Text);
+            mainPort.DataBits = Convert.ToInt32(databits.Text);
             databits.CheckState = CheckState.Checked;
-            dataBitsInfo.Text = mbRtu.DataBits.ToString();
+            dataBitsInfo.Text = mainPort.DataBits.ToString();
         }
         private void ParityForSerial(object sender, EventArgs e)
         {
@@ -110,35 +112,35 @@ namespace MCS100_CPU_CODESYS
             switch (parity.Text)
             {
                 case "None":
-                    mbRtu.Parity = System.IO.Ports.Parity.None;
+                    mainPort.Parity = System.IO.Ports.Parity.None;
                     break;
                 case "Odd":
-                    mbRtu.Parity = System.IO.Ports.Parity.Odd;
+                    mainPort.Parity = System.IO.Ports.Parity.Odd;
                     break;
                 case "Even":
-                    mbRtu.Parity = System.IO.Ports.Parity.Even;
+                    mainPort.Parity = System.IO.Ports.Parity.Even;
                     break;
                 case "Mark":
-                    mbRtu.Parity = System.IO.Ports.Parity.Mark;
+                    mainPort.Parity = System.IO.Ports.Parity.Mark;
                     break;
                 case "Space":
-                    mbRtu.Parity = System.IO.Ports.Parity.Space;
+                    mainPort.Parity = System.IO.Ports.Parity.Space;
                     break;
             }
             parity.CheckState = CheckState.Checked;
-            ParityInfo.Text = mbRtu.Parity.ToString();
+            ParityInfo.Text = mainPort.Parity.ToString();
         }
         private void StopBitsForSerial(object sender, EventArgs e)
         {
             ToolStripMenuItem stopbits = (ToolStripMenuItem)sender;
             foreach (ToolStripMenuItem item in stopBits.DropDownItems) item.CheckState = CheckState.Unchecked;
             Enum.TryParse(Enum.GetName(typeof(StopBits), Convert.ToInt32(stopbits.Text)), out StopBits bits);
-            mbRtu.StopBits = bits;
+            mainPort.StopBits = bits;
             stopbits.CheckState = CheckState.Checked;
             StopBitsInfo.Text = stopbits.Text;
         }
         private void BaudRateSelectedIndexChanged()
-            => mbRtu.BaudRate = Convert.ToInt32(BaudRate.SelectedItem);
+            => mainPort.BaudRate = Convert.ToInt32(BaudRate.SelectedItem);
         private void FillGrid()
         {
             RegistersGrid.Rows.Clear();
@@ -155,52 +157,43 @@ namespace MCS100_CPU_CODESYS
             TimeFromGrid.Text = "";
         }
         private void GridClearClick() => FillGrid();
-        private void AfterComEvent(bool sw)
-        {
-            comPort.Enabled =
-                RefreshSerial.Enabled =
-                TcpPage.Enabled = !sw;
-            mbClass = sw ? new ModBusClass(mbRtu) : null;
-        }
-        private void AfterTcpEvent(bool sw)
-        {
-            IPaddressBox.Enabled =
-                numericPort.Enabled =
-                RtuPage.Enabled = !sw;
-            mbClass = sw ? new ModBusClass(mbTcp) : null;
-        }
         private void AfterAnyInterfaceEvent(bool sw)
         {
             RegistersGrid.Enabled =
+                ReadButton.Enabled = 
                 SettingsPanel.Enabled = sw;
         }
-        private void AfterStartReading(bool sw)
-            => manualReadButton.Enabled =
-                        OpenCom.Enabled =
-                        Connect.Enabled =
-                       BaudRate.Enabled =
-                toolStripSerial.Enabled = !sw;
         private void OpenComClick(object sender, EventArgs e)
         {
+            void AfterInterfaceEvent(bool sw)
+            {
+                comPort.Enabled =
+                    RefreshSerial.Enabled =
+                    TcpPage.Enabled = !sw;
+                mbClass = sw ? new ModBusClass(mainPort) : null;
+                if (mbClass != null) mbClass.ToReply += ToReplyStatus;
+            }
             if (OpenCom.Text == "Open")
             {
-                try
-                {
-                    mbRtu.Open();
-                    OpenCom.Text = "Close";
-                }
-                catch (Exception ex) { ToInfoStatus(ex.Message); }
+                try { mainPort.Open(); }
+                catch (Exception ex) { ToMessageStatus(ex.Message); }
             }
             else
-            {
-                mbRtu.Close();
-                OpenCom.Text = "Open";
-            }
-            AfterComEvent(mbRtu.IsOpen);
-            AfterAnyInterfaceEvent(mbRtu.IsOpen);
+                mainPort.Close();
+            OpenCom.Text = mainPort.IsOpen ? "Close" : "Open";
+            AfterInterfaceEvent(mainPort.IsOpen);
+            AfterAnyInterfaceEvent(mainPort.IsOpen);
         }
         private void ConnectClick(object sender, EventArgs e)
         {
+            void AfterInterfaceEvent(bool sw)
+            {
+                IPaddressBox.Enabled =
+                    numericPort.Enabled =
+                    RtuPage.Enabled = !sw;
+                mbClass = sw ? new ModBusClass(mbTcp) : null;
+                if (mbClass != null) mbClass.ToReply += ToReplyStatus;
+            }
             try
             {
                 if (Connect.Text == "Connect")
@@ -227,23 +220,24 @@ namespace MCS100_CPU_CODESYS
                 try { mbTcp.Shutdown(SocketShutdown.Both); } catch { }
                 Connect.Text = "Connect";
             }
-            AfterTcpEvent(mbTcp.Connected);
+            AfterInterfaceEvent(mbTcp.Connected);
             AfterAnyInterfaceEvent(mbTcp.Connected);
         }
+
         async private Task<Reply> WriteRegister(REnum register, ushort value)
         {
             byte[] cmdOut = mbClass.FormatModBusCMD((byte)ID.Value, WriteMB.WriteAO, (ushort)register, value);
             Tuple<byte[], Reply> reply = mbClass.Handler(cmdOut);
-            ToInfoStatus($"Отправлено на ID: {ID.Value} : {reply.Item2}");
-            await Task.Delay(50);
+            ToMessageStatus($"Отправлено на ID: {ID.Value} : {reply.Item2}");
+            await Task.Delay((int)timeoutMB.Value);
             return reply.Item2;
         }
         async private Task<Reply> MWriteRegisters(REnum startRegister, ushort[] values)
         {
             byte[] cmdOut = mbClass.FormatMultiplyAO((byte)ID.Value, (ushort)startRegister, (ushort)values.Length, values);
             Tuple<byte[], Reply> reply = mbClass.Handler(cmdOut);
-            ToInfoStatus($"Отправлено на ID: {ID.Value} : {reply.Item2}");
-            await Task.Delay(50);
+            ToMessageStatus($"Отправлено на ID: {ID.Value} : {reply.Item2}");
+            await Task.Delay((int)timeoutMB.Value);
             return reply.Item2;
         }
         private void DataToGrid(byte[] cmdIn, int column)
@@ -255,29 +249,40 @@ namespace MCS100_CPU_CODESYS
                     RegistersGrid[column, j].Value = cmdIn[i] << 8 | cmdIn[i+1];
                     i += 2;
                 }
-                DateFromGrid.Text =
-                $"{RegistersGrid[column, 0].Value}/{RegistersGrid[column, 1].Value}/{RegistersGrid[column, 2].Value}";
-                TimeFromGrid.Text =
-                $"{RegistersGrid[column, 3].Value}:{RegistersGrid[column, 4].Value}:{RegistersGrid[column, 5].Value}";
+                TimeFromReg.Text = 
+                $"{RegistersGrid[2, 0].Value}.{RegistersGrid[2, 1].Value:00}.{RegistersGrid[2, 2].Value:00} " +
+                $"{RegistersGrid[2, 3].Value:00}:{RegistersGrid[2, 4].Value:00}:{RegistersGrid[2, 5].Value:00}";
             }));
         }
         async private void StartReading()
         {
-            AfterStartReading(autoRButton.Checked);
-            await Task.Run(() => StartReadingAsync());
-            AfterStartReading(autoRButton.Checked);
+            void AfterStartReading(bool sw)
+            {
+                OpenCom.Enabled =
+                        Connect.Enabled =
+                       BaudRate.Enabled =
+                toolStripSerial.Enabled = sw;
+
+                Options.active = !sw;
+                ReadButton.Text = !sw ? "Stop" : "Read";
+            }
+            if (Options.active) { Options.Token?.Cancel(); return; }
+            Options.Token = new CancellationTokenSource();
+
+            AfterStartReading(false);
+            try { await Task.Run(() => StartReadingAsync()); } catch { }
+            AfterStartReading(true);
         }
         private void GetSocketException(string message)
             => Invoke((MethodInvoker)(() => {
-            manualRButton.Checked = Enabled;
             ConnectClick(null, null);
-            MessageBox.Show(message);
-        }));
+            MessageBox.Show(message); 
+            }));
         async private Task CellSetRegisterValue(object sender, DataGridViewCellEventArgs e)
         {
             Enum.TryParse(RegistersGrid[(int)CEnum.field, e.RowIndex].Value.ToString(), out REnum register);
             if (RegistersGrid[(int)CEnum.ReadWriteAO, e.RowIndex].Value is null) return;
-            await semaphoreSlim.WaitAsync();
+            await semaphoreSlim.WaitAsync(Options.Token.Token);
             try
             {
                 if (UInt16.TryParse(RegistersGrid[(int)CEnum.ReadWriteAO, e.RowIndex].Value.ToString(), out ushort value)
@@ -285,41 +290,39 @@ namespace MCS100_CPU_CODESYS
                 throw new Exception();
             }
             catch (SocketException ex) { GetSocketException(ex.Message); }
-            catch { ToInfoStatus("Error transcieve"); RegistersGrid[(int)CEnum.ReadWriteAO, e.RowIndex].Value = ""; }
+            catch { ToMessageStatus("Error transcieve"); RegistersGrid[(int)CEnum.ReadWriteAO, e.RowIndex].Value = ""; }
             finally { semaphoreSlim.Release(); }
         }
         async private Task StartReadingAsync()
         {
-            bool firstRead = true;
             do
             {
-                await semaphoreSlim.WaitAsync();
+                await semaphoreSlim.WaitAsync(Options.Token.Token);
                 try
                 {
                     byte[] cmdOut;
                     Tuple<byte[], Reply> reply;
-                    if (firstRead)
+                    if (x03ToolStrip.Checked && !Options.Token.IsCancellationRequested)
                     {
                         cmdOut = mbClass.FormatModBusCMD((byte)ID.Value, ReadMB.ReadAO, 0, 7);
                         reply = mbClass.Handler(cmdOut);
-                        ToInfoStatus(reply.Item2.ToString());
+                        ToMessageStatus($"ID:{ID.Value}, Command 0x03:");
                         if (reply != null && reply.Item2 == Reply.Ok) DataToGrid(reply.Item1, (int)CEnum.ReadWriteAO);
-                        firstRead = false;
                     }
-                    cmdOut = mbClass.FormatModBusCMD((byte)ID.Value, ReadMB.ReadAI, 0, 7);
-                    reply = mbClass.Handler(cmdOut);
-                    ToInfoStatus(reply.Item2.ToString());
-                    if (reply != null && reply.Item2 == Reply.Ok) DataToGrid(reply.Item1, (int)CEnum.ReadAI);
+                    if (x04ToolStrip.Checked && !Options.Token.IsCancellationRequested)
+                    {
+                        cmdOut = mbClass.FormatModBusCMD((byte)ID.Value, ReadMB.ReadAI, 0, 7);
+                        reply = mbClass.Handler(cmdOut);
+                        ToMessageStatus($"ID:{ID.Value}, Command 0x04:");
+                        if (reply != null && reply.Item2 == Reply.Ok) DataToGrid(reply.Item1, (int)CEnum.ReadAI);
+                    }
                 }
                 catch (SocketException ex) { GetSocketException(ex.Message); break; }
                 catch (Exception ex) { MessageBox.Show(ex.ToString()); }
-                finally
-                {
-                    await Task.Delay(manualRButton.Checked ? 50 : (int)timeoutMB.Value);
-                    semaphoreSlim.Release();
-                }
+                finally { semaphoreSlim.Release(); }
+                await Task.Delay(repeatToolStrip.Checked ? (int)timeoutMB.Value : 10, Options.Token.Token);
             }
-            while (autoRButton.Checked);
+            while (!Options.Token.IsCancellationRequested && repeatToolStrip.Checked);
         }
         async private Task SetRealTimeClick()
         {
@@ -333,14 +336,14 @@ namespace MCS100_CPU_CODESYS
                     (ushort)DateTime.Now.Second,
                     1
                 };
-            await semaphoreSlim.WaitAsync();
+            await semaphoreSlim.WaitAsync(Options.Token.Token);
             try
             {
                 await MWriteRegisters(REnum.Year, new ushort[7]);
                 await MWriteRegisters(REnum.Year, timeArray);
             }
             catch (SocketException ex) { GetSocketException(ex.Message); }
-            catch { ToInfoStatus("Error transcieve"); }
+            catch { ToMessageStatus("Error transcieve"); }
             finally { semaphoreSlim.Release(); }
         }
     }
