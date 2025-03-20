@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using System.Threading;
+﻿using System.Threading;
 
 namespace StaticSettings
 {
@@ -7,5 +6,8 @@ namespace StaticSettings
     {
         public static CancellationTokenSource Token;
         public static bool active { get; set; } = false;
+
+        //interfaces
+        public static object mainInterface { get; set; }
     }
 }

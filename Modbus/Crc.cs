@@ -2,11 +2,11 @@
 using System.Linq;
 using System;
 
-namespace MBus
+namespace Modbus.Crc
 {
-    public static class ModBusCrc
+    public static class ModbusCrc
     {
-        private static ushort GetCrc(IEnumerable<byte> buffer, ushort crc)
+        public static ushort GetCrc(IEnumerable<byte> buffer, ushort crc)
         {
             for (int pos = 0; pos < buffer.Count(); pos++)
             {
@@ -23,7 +23,7 @@ namespace MBus
             }
             return crc;
         }
-        public static bool CrcCheck(IEnumerable<byte> buffer, ushort crc = 0xffff)
+        public static bool CheckCrc(IEnumerable<byte> buffer, ushort crc = 0xffff) 
             => GetCrc(buffer, crc) == 0;
         public static IEnumerable<byte> GetCrcBytes(IEnumerable<byte> buffer, ushort crc = 0xffff)
             => BitConverter.GetBytes(GetCrc(buffer, crc));

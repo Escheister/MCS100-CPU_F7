@@ -6,12 +6,12 @@ using System.Runtime.InteropServices;
 // набора атрибутов. Измените значения этих атрибутов для изменения сведений,
 // связанных со сборкой.
 [assembly: AssemblyTitle("MCS100-CPU_CODESYS")]
-[assembly: AssemblyDescription("MCS100-CPU_CODESYS")]
+[assembly: AssemblyDescription("Программа для опроса устройства MCS100-CPU через тестовый проект")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("SMTech")]
 [assembly: AssemblyProduct("MCS100-CPU_CODESYS")]
-[assembly: AssemblyCopyright("Ekimchenko Denis Sergeevich  ©  2024")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCopyright("Denis Ekimchenko  ©  2024")]
+[assembly: AssemblyTrademark("Denis Ekimchenko")]
 [assembly: AssemblyCulture("")]
 
 // Установка значения False для параметра ComVisible делает типы в этой сборке невидимыми
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // Можно задать все значения или принять номера сборки и редакции по умолчанию 
 // используя "*", как показано ниже:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.3")]
-[assembly: AssemblyFileVersion("1.0.0.3")]
+[assembly: AssemblyVersion("1.0.0.4")]
+[assembly: AssemblyFileVersion("1.0.0.4")]

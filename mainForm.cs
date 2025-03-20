@@ -8,9 +8,9 @@ using System.Threading;
 using System.IO.Ports;
 using System;
 
+using Modbus.Protocol;
 using StaticSettings;
 using ProtocolEnums;
-using MBus;
 
 namespace MCS100_CPU_CODESYS
 {
@@ -18,7 +18,6 @@ namespace MCS100_CPU_CODESYS
     {
 
         private Socket mbTcp;
-        public ModBusClass mbClass { get; set; } = null;
         SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
 
         public mainForm()
@@ -170,8 +169,7 @@ namespace MCS100_CPU_CODESYS
                 comPort.Enabled =
                     RefreshSerial.Enabled =
                     TcpPage.Enabled = !sw;
-                mbClass = sw ? new ModBusClass(mainPort) : null;
-                if (mbClass != null) mbClass.ToReply += ToReplyStatus;
+                Options.mainInterface = sw ? mainPort : null;
             }
             if (OpenCom.Text == "Open")
             {
@@ -191,8 +189,7 @@ namespace MCS100_CPU_CODESYS
                 IPaddressBox.Enabled =
                     numericPort.Enabled =
                     RtuPage.Enabled = !sw;
-                mbClass = sw ? new ModBusClass(mbTcp) : null;
-                if (mbClass != null) mbClass.ToReply += ToReplyStatus;
+                Options.mainInterface = sw ? mbTcp : null;
             }
             try
             {
@@ -226,19 +223,27 @@ namespace MCS100_CPU_CODESYS
 
         async private Task<Reply> WriteRegister(REnum register, ushort value)
         {
-            byte[] cmdOut = mbClass.FormatModBusCMD((byte)ID.Value, WriteMB.WriteAO, (ushort)register, value);
-            Tuple<byte[], Reply> reply = mbClass.Handler(cmdOut);
-            ToMessageStatus($"Отправлено на ID: {ID.Value} : {reply.Item2}");
-            await Task.Delay((int)timeoutMB.Value);
-            return reply.Item2;
+            using (ModbusProtocol modbus = new ModbusProtocol(Options.mainInterface))
+            {
+                modbus.ToReply += ToReplyStatus; 
+                byte[] cmdOut = modbus.FormatModBusCMD((byte)ID.Value, WriteMB.WriteAO, (ushort)register, value);
+                Tuple<byte[], Reply> reply = await modbus.GetData(cmdOut);
+                ToMessageStatus($"Отправлено на ID: {ID.Value} : {reply.Item2}");
+                await Task.Delay((int)timeoutMB.Value);
+                return reply.Item2;
+            }
         }
         async private Task<Reply> MWriteRegisters(REnum startRegister, ushort[] values)
         {
-            byte[] cmdOut = mbClass.FormatMultiplyAO((byte)ID.Value, (ushort)startRegister, (ushort)values.Length, values);
-            Tuple<byte[], Reply> reply = mbClass.Handler(cmdOut);
-            ToMessageStatus($"Отправлено на ID: {ID.Value} : {reply.Item2}");
-            await Task.Delay((int)timeoutMB.Value);
-            return reply.Item2;
+            using (ModbusProtocol modbus = new ModbusProtocol(Options.mainInterface))
+            {
+                modbus.ToReply += ToReplyStatus;
+                byte[] cmdOut = modbus.FormatMultiplyAO((byte)ID.Value, (ushort)startRegister, (ushort)values.Length, values);
+                Tuple<byte[], Reply> reply = await modbus.GetData(cmdOut);
+                ToMessageStatus($"Отправлено на ID: {ID.Value} : {reply.Item2}");
+                await Task.Delay((int)timeoutMB.Value);
+                return reply.Item2;
+            }
         }
         private void DataToGrid(byte[] cmdIn, int column)
         {
@@ -295,34 +300,39 @@ namespace MCS100_CPU_CODESYS
         }
         async private Task StartReadingAsync()
         {
-            do
+            using (ModbusProtocol modbus = new ModbusProtocol(Options.mainInterface)) 
             {
-                await semaphoreSlim.WaitAsync(Options.Token.Token);
-                try
+                modbus.ToReply += ToReplyStatus;
+                do
                 {
-                    byte[] cmdOut;
-                    Tuple<byte[], Reply> reply;
-                    if (x03ToolStrip.Checked && !Options.Token.IsCancellationRequested)
+                    await semaphoreSlim.WaitAsync(Options.Token.Token);
+                    try
                     {
-                        cmdOut = mbClass.FormatModBusCMD((byte)ID.Value, ReadMB.ReadAO, 0, 7);
-                        reply = mbClass.Handler(cmdOut);
-                        ToMessageStatus($"ID:{ID.Value}, Command 0x03:");
-                        if (reply != null && reply.Item2 == Reply.Ok) DataToGrid(reply.Item1, (int)CEnum.ReadWriteAO);
+                        byte[] cmdOut;
+                        Tuple<byte[], Reply> reply;
+                        if (x03ToolStrip.Checked && !Options.Token.IsCancellationRequested)
+                        {
+                            cmdOut = modbus.FormatModBusCMD((byte)ID.Value, ReadMB.ReadAO, 0, 7);
+                            reply = await modbus.GetData(cmdOut);
+                            ToMessageStatus($"ID:{ID.Value}, Command 0x03:");
+                            if (reply != null && reply.Item2 == Reply.Ok) DataToGrid(reply.Item1, (int)CEnum.ReadWriteAO);
+                        }
+                        if (x04ToolStrip.Checked && !Options.Token.IsCancellationRequested)
+                        {
+                            cmdOut = modbus.FormatModBusCMD((byte)ID.Value, ReadMB.ReadAI, 0, 7);
+                            reply = await modbus.GetData(cmdOut);
+                            ToMessageStatus($"ID:{ID.Value}, Command 0x04:");
+                            if (reply != null && reply.Item2 == Reply.Ok) DataToGrid(reply.Item1, (int)CEnum.ReadAI);
+                        }
                     }
-                    if (x04ToolStrip.Checked && !Options.Token.IsCancellationRequested)
-                    {
-                        cmdOut = mbClass.FormatModBusCMD((byte)ID.Value, ReadMB.ReadAI, 0, 7);
-                        reply = mbClass.Handler(cmdOut);
-                        ToMessageStatus($"ID:{ID.Value}, Command 0x04:");
-                        if (reply != null && reply.Item2 == Reply.Ok) DataToGrid(reply.Item1, (int)CEnum.ReadAI);
-                    }
+                    catch (SocketException ex) { GetSocketException(ex.Message); break; }
+                    catch (Exception ex) { MessageBox.Show(ex.ToString()); }
+                    finally { semaphoreSlim.Release(); }
+                    await Task.Delay(repeatToolStrip.Checked ? (int)timeoutMB.Value : 10, Options.Token.Token);
                 }
-                catch (SocketException ex) { GetSocketException(ex.Message); break; }
-                catch (Exception ex) { MessageBox.Show(ex.ToString()); }
-                finally { semaphoreSlim.Release(); }
-                await Task.Delay(repeatToolStrip.Checked ? (int)timeoutMB.Value : 10, Options.Token.Token);
+                while (!Options.Token.IsCancellationRequested && repeatToolStrip.Checked);
             }
-            while (!Options.Token.IsCancellationRequested && repeatToolStrip.Checked);
+            
         }
         async private Task SetRealTimeClick()
         {
